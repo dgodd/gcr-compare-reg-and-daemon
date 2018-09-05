@@ -5,7 +5,6 @@ import (
 	"context"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net"
 	"net/http"
 	"time"
@@ -25,7 +24,7 @@ func rundaemon() error {
 		return err
 	}
 
-	log.Printf("NewTag took %s", time.Since(start))
+	fmt.Printf("- NewTag took %s\n", time.Since(start))
 	start = time.Now()
 
 	image, err := daemon.Image(tag)
@@ -33,15 +32,15 @@ func rundaemon() error {
 		return err
 	}
 
-	log.Printf("Image Read took %s", time.Since(start))
+	fmt.Printf("- Image Read took %s\n", time.Since(start))
 	start = time.Now()
 
 	if _, err := daemon.Write(tag, image, daemon.WriteOptions{}); err != nil {
 		return err
 	}
 
-	log.Printf("Image Write took %s", time.Since(start))
-	log.Printf("TOTAL took %s", time.Since(totalstart))
+	fmt.Printf("- Image Write took %s\n", time.Since(start))
+	fmt.Printf("- __TOTAL took %s__\n", time.Since(totalstart))
 
 	return nil
 }
@@ -55,7 +54,7 @@ func runregistry() error {
 		return err
 	}
 
-	log.Printf("ParseReference took %s", time.Since(start))
+	fmt.Printf("- ParseReference took %s\n", time.Since(start))
 	start = time.Now()
 
 	auth, err := authn.DefaultKeychain.Resolve(ref.Context().Registry)
@@ -63,7 +62,7 @@ func runregistry() error {
 		return err
 	}
 
-	log.Printf("Auth creation took %s", time.Since(start))
+	fmt.Printf("- Auth creation took %s\n", time.Since(start))
 	start = time.Now()
 
 	image, err := remote.Image(ref, remote.WithAuth(auth))
@@ -71,15 +70,15 @@ func runregistry() error {
 		return err
 	}
 
-	log.Printf("Image Read took %s", time.Since(start))
+	fmt.Printf("- Image Read took %s\n", time.Since(start))
 	start = time.Now()
 
 	if err := remote.Write(ref, image, auth, http.DefaultTransport, remote.WriteOptions{}); err != nil {
 		return err
 	}
 
-	log.Printf("Image Write took %s", time.Since(start))
-	log.Printf("TOTAL took %s", time.Since(totalstart))
+	fmt.Printf("- Image Write took %s\n", time.Since(start))
+	fmt.Printf("- __TOTAL took %s__\n", time.Since(totalstart))
 
 	return nil
 }
@@ -96,7 +95,7 @@ func rundaemonapi() error {
 		},
 	}
 
-	log.Printf("http.Client took %s", time.Since(start))
+	fmt.Printf("- http.Client took %s\n", time.Since(start))
 	start = time.Now()
 
 	res, err := httpc.Get("http://unix/images/dgodd/some-build-image/get")
@@ -108,7 +107,7 @@ func rundaemonapi() error {
 		return fmt.Errorf("NON-200 code on image get: %d", res.StatusCode)
 	}
 
-	log.Printf("get took %s", time.Since(start))
+	fmt.Printf("- get took %s\n", time.Since(start))
 	start = time.Now()
 
 	buf, err := ioutil.ReadAll(res.Body)
@@ -116,8 +115,8 @@ func rundaemonapi() error {
 		return err
 	}
 
-	log.Printf("read body took %s", time.Since(start))
-	log.Printf("size of buffer: c. %dM", len(buf)>>20)
+	fmt.Printf("- read body took %s\n", time.Since(start))
+	fmt.Printf("- size of buffer: c. %dM\n", len(buf)>>20)
 	start = time.Now()
 
 	res, err = httpc.Post("http://unix/images/load", "", bytes.NewReader(buf))
@@ -129,24 +128,24 @@ func rundaemonapi() error {
 		return fmt.Errorf("NON-200 code on image get: %d", res.StatusCode)
 	}
 
-	log.Printf("write body took %s", time.Since(start))
-	log.Printf("TOTAL took %s", time.Since(totalstart))
+	fmt.Printf("- write body took %s\n", time.Since(start))
+	fmt.Printf("- __TOTAL took %s__\n", time.Since(totalstart))
 
 	return nil
 }
 
 func main() {
-	fmt.Println("*** DAEMON ***")
+	fmt.Printf("### GO-CONTAINERREGISTRY DAEMON\n\n")
 	if err := rundaemon(); err != nil {
 		panic(err)
 	}
 
-	fmt.Println("\n*** REGISTRY ***")
+	fmt.Printf("\n\n### GO-CONTAINERREGISTRY REGISTRY\n\n")
 	if err := runregistry(); err != nil {
 		panic(err)
 	}
 
-	fmt.Println("\n*** DAEMON API ***")
+	fmt.Printf("\n\n### DAEMON API\n\n")
 	if err := rundaemonapi(); err != nil {
 		panic(err)
 	}
