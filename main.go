@@ -13,6 +13,7 @@ import (
 )
 
 func rundaemon() error {
+	totalstart := time.Now()
 	start := time.Now()
 
 	tag, err := name.NewTag("dgodd/some-build-image", name.WeakValidation) // "Size": 135M
@@ -36,15 +37,16 @@ func rundaemon() error {
 	}
 
 	log.Printf("Image Write took %s", time.Since(start))
-	// start = time.Now()
+	log.Printf("TOTAL took %s", time.Since(totalstart))
 
 	return nil
 }
 
 func runregistry() error {
+	totalstart := time.Now()
 	start := time.Now()
 
-	ref, err := name.ParseReference("dgodd/some-build-image", name.WeakValidation)
+	ref, err := name.ParseReference("dgodd/some-build-image", name.WeakValidation) // "Size": 135M
 	if err != nil {
 		return err
 	}
@@ -73,7 +75,7 @@ func runregistry() error {
 	}
 
 	log.Printf("Image Write took %s", time.Since(start))
-	// start = time.Now()
+	log.Printf("TOTAL took %s", time.Since(totalstart))
 
 	return nil
 }
