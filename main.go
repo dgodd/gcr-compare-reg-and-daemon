@@ -140,13 +140,13 @@ func main() {
 		panic(err)
 	}
 
-	fmt.Printf("\n\n### GO-CONTAINERREGISTRY REGISTRY\n\n")
-	if err := runregistry(); err != nil {
-		panic(err)
-	}
-
-	fmt.Printf("\n\n### DAEMON API\n\n")
-	if err := rundaemonapi(); err != nil {
-		panic(err)
-	}
+	// fmt.Printf("\n\n### GO-CONTAINERREGISTRY REGISTRY\n\n")
+	// if err := runregistry(); err != nil {
+	// 	panic(err)
+	// }
+	//
+	// fmt.Printf("\n\n### DAEMON API\n\n")
+	// if err := rundaemonapi(); err != nil {
+	// 	panic(err)
+	// }
 }
