@@ -1,8 +1,12 @@
 package main
 
 import (
+	"bytes"
+	"context"
 	"fmt"
+	"io/ioutil"
 	"log"
+	"net"
 	"net/http"
 	"time"
 
@@ -80,6 +84,57 @@ func runregistry() error {
 	return nil
 }
 
+func rundaemonapi() error {
+	totalstart := time.Now()
+	start := time.Now()
+
+	httpc := http.Client{
+		Transport: &http.Transport{
+			DialContext: func(_ context.Context, _, _ string) (net.Conn, error) {
+				return net.Dial("unix", "/var/run/docker.sock")
+			},
+		},
+	}
+
+	log.Printf("http.Client took %s", time.Since(start))
+	start = time.Now()
+
+	res, err := httpc.Get("http://unix/images/dgodd/some-build-image/get")
+	if err != nil {
+		return err
+	}
+	defer res.Body.Close()
+	if res.StatusCode != 200 {
+		return fmt.Errorf("NON-200 code on image get: %d", res.StatusCode)
+	}
+
+	log.Printf("get took %s", time.Since(start))
+	start = time.Now()
+
+	buf, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		return err
+	}
+
+	log.Printf("read body took %s", time.Since(start))
+	log.Printf("size of buffer: c. %dM", len(buf)>>20)
+	start = time.Now()
+
+	res, err = httpc.Post("http://unix/images/load", "", bytes.NewReader(buf))
+	if err != nil {
+		return err
+	}
+	defer res.Body.Close()
+	if res.StatusCode != 200 {
+		return fmt.Errorf("NON-200 code on image get: %d", res.StatusCode)
+	}
+
+	log.Printf("write body took %s", time.Since(start))
+	log.Printf("TOTAL took %s", time.Since(totalstart))
+
+	return nil
+}
+
 func main() {
 	fmt.Println("*** DAEMON ***")
 	if err := rundaemon(); err != nil {
@@ -88,6 +143,11 @@ func main() {
 
 	fmt.Println("\n*** REGISTRY ***")
 	if err := runregistry(); err != nil {
+		panic(err)
+	}
+
+	fmt.Println("\n*** DAEMON API ***")
+	if err := rundaemonapi(); err != nil {
 		panic(err)
 	}
 }
